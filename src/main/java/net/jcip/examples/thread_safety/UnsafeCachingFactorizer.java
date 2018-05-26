@@ -1,4 +1,4 @@
-package net.jcip.examples;
+package net.jcip.examples.thread_safety;
 
 import java.math.BigInteger;
 import java.util.concurrent.atomic.*;
