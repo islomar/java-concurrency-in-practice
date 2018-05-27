@@ -1,4 +1,4 @@
-package net.jcip.examples;
+package net.jcip.examples.shared_objects;
 
 import java.util.*;
 

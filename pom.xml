@@ -31,11 +31,15 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>jcip</groupId>
+            <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
             <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/jcip-annotations.jar</systemPath>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.swt</groupId>
+            <artifactId>org.eclipse.swt.win32.win32.x86</artifactId>
+            <version>4.3</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

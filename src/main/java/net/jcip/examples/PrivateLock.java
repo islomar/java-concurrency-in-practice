@@ -1,6 +1,7 @@
 package net.jcip.examples;
 
 import net.jcip.annotations.*;
+import org.eclipse.swt.widgets.Widget;
 
 /**
  * PrivateLock
@@ -11,7 +12,8 @@ import net.jcip.annotations.*;
  */
 public class PrivateLock {
     private final Object myLock = new Object();
-    @GuardedBy("myLock") Widget widget;
+    @GuardedBy("myLock")
+    Widget widget;
 
     void someMethod() {
         synchronized (myLock) {

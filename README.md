@@ -43,8 +43,8 @@ Notes and examples from the book "Java concurrency in practice" by Brian Goetz, 
     * A common idiom that uses check-then-act is *lazy initialization*.
 
 
-## Fundamentals
-### Thread Safety
+## Part I: Fundamentals
+### Chapter 2: Thread Safety
 * Writing thread-safe code is, at its core, about managing access to *state*, and in particular to *shared*, *mutable state*.
 * We want to protect *data* from uncontrolled concurrent access.
 * Primary mechanism for synchronization in Java: the *synchronized* keyword.
@@ -68,9 +68,9 @@ Notes and examples from the book "Java concurrency in practice" by Brian Goetz, 
     * They act as *mutexes* (or mutual exclusion locks), which means that at most one thread may own the lock.
     * Intrinsic locks are *reentrant*: locks are acquired on a per-thread rather than per-invocation basis (it means that a thread trying to get a lock already held, succeeds). Reentrancy is implemented by associating with each lock an acquisitions count and an owning thread.
     * Reentrancy saves us from deadlock sometimes, e.g. when calling a synchronized parent method from itself.
-* If synchronization is used to coordinate access to a variable, it is neede *everywhere thtat variable is accessed*
+* If synchronization is used to coordinate access to a variable, it is needed *everywhere that variable is accessed*
 * For each mutable state variable that may be accessed by more than one thread, all accesses to that variable must be performed with the same lock held. In this case, we say that the variable is guarded by that lock.
-* Acquireing the lock associated with an object does **not** prevent other threads from accessing that object - the only thing that acquiring a lock prevents any other thread from doing is acquiring that same lock.
+* Acquiring the lock associated with an object does **not** prevent other threads from accessing that object - the only thing that acquiring a lock prevents any other thread from doing is acquiring that same lock.
 * Every shared, mutable variable should be guarded by exactly one lock.
 * A common locking convention is to encapsulate all mutable state within an object and to protect it from concurrent access by synchronizing any code path that accesses mutable state using the object's intrinsic lock. 
 * For every invariant that involves more than one variable, all the variables involved in that invariant must be guarded by the same lock 
@@ -80,15 +80,81 @@ Notes and examples from the book "Java concurrency in practice" by Brian Goetz, 
 * Avoid holding locks during lengthy computations or operations at risk of not completing quickly such as network or console I/O.
 
 
-### Sharing Objects
+### Chapter 3: Sharing Objects
+* **Visibility**: 
+    * besides the synchronization, threads must be able to see the changes done to the shared data from other threads.
+    * **reordering**: there is no guarantee that operations in one thread will be performed in the order given by the program.
+    * In the absence of synchronization, the compiler, processor, and runtime can do some downright weird things to the order in which operations appear to execute.
+    * Unless synchronization is used **every time a variable is accessed**, it is possible to see a *stale* value for that variable.
+    * **out-of-thin-air safety**: when a thread reads a variable without synchronization, the value read is not random, but at least something written by someone.
+        * Exception: 64-bit numeric variables (double and long) that are not declared *volatile*. JMM might read/write a 64-bit as two separate 32-bit operations.
+        * It's not safe to use shared mutable *long* and *double* variables in multithreaded programs unless they are declared *volatile* or guarded by a lock.
+    * Locking is not just about mutual exclusion; it is also about memory visibility. 
+    * **Threads must synchronize on a common lock**.
+    * **Volatile** variables are not cached in registers or in caches where they are hidden from other processors, so a read of a volatile variable **always returns the most recent write by any thread**.
+    * Volatile variables are a lighter-weight synchronization mechanism than *synchronized*.
+    * Code that relies on volatile variables for visibility of arbitrary state is more fragile and harder to understand than code that uses locking.
+    * The most common use for volatile variables is a completion, interruption or **status flag** (e.g. to determine when to exit a loop).
+    * Locking can guarantee both visibility and atomicity; volatile variables can only guarantee visibility.
+* **Publication and escape**
+    * **Publishing** an object means making it available to code outside of its current scope.
+    * An object that is published when it should not have been is said to have **escaped**
+    * Publishing an object also publishes any objects referred to by its nonprivate fields.
+    * Inner class instances contain a hidden reference to the enclosing instance.
+    * If the **this** reference escapes during construction, the object is considered *not properly constructed*.
+         * A common mistake: start a thread from the constructor.
+         * You can create the thread in the constructor, but don't start it.
+         * If you need to, use a private constructor and a public factory method.
+* **Thread confinement**
+    * One way to avoid synchronization is to not share.
+    * When an object is confined to a thread, such usage is automatically thread-safe even if the confined object itself is not: e.g. in Swing and pooled JDBC *Connection* objects.
+    * **Ad-hoc thread confinement**: the responsibility for maintaining thread confinement falls entirely on the implementation.
+    * **Stack confinement = within-thread = thread-local**: an object can only be reached through local variables. Local variables are intrinsically confined to the executing thread.
+    * Using a non-thread-safe object in a within-thread context is still thread-safe.
+    * **ThreadLocal** provides *get* and *set* accessor methods that maintain a separate copy of the value for each thread that uses it.
+        * Used to prevent sharing in designs based on mutable Singletons or global variables.
+        * If you are porting a single-threaded application to a multithreaded environment, you can preserve thread safety by converting shared global variables into `ThreadLocals`. 
+* **Immutability**
+    * An immutable object is one whose state cannot be changed after construction.
+    * Immutable objects are always thread-safe.
+    * An object is immutable if:
+        * Its state cannot be modified after construction;
+        * All its fields are `final`;
+        * It is properly constructed (the `this` reference does not escape during construction).
+    * Whenever a group of related data items must be acted on atomically, consider creating an immutable holder class for them (e.g. `OneValueCache`).
+    * `VolatileCachedFactorizer` is thread-safe without locking because it combines `volatile` and immutability.
+    * JMM offers a special guarantee of **initialization safety** for sharing immutable objects.
+    * Objects that are not immutable must be *safely published*.
+    * Thread-safe library collections: ConcurrentMap, synchronizedMap, synchronizedList, synchronizedSet, BlockingQueue, ConcurrentLinkedQueue, CopyOnWriteArrayList, CopyOnWriteArraySet
+    * Using a static initializer is often the easiest and safest way to publish objects that can be statically constructed.
+    * Objects that are not technically immutable, but whose state will not be modified after publication, are called **effectively immutable**.
+    * The most useful policies for using and sharing objects in a concurrent program are:
+        * Thread-confined.
+        * Shared read-only.
+        * Shared thread-safe.
+        * Guarded.
+
+
+### Chapter 4: Composing Objects
+TBD
+
+### Chapter 5: Building Blocks
 TBD
 
 
-## Structuring concurrent applications
+## Part II: Structuring concurrent applications
+### Chapter 6: Task execution
 TBD
 
-## Liveness, Performance and Testing
+### Chapter 7: Cancellation and Shutdown
 TBD
 
-## Advanced Topics
+
+##  Part III: Liveness, Performance and Testing
 TBD
+
+##  Part IV: Advanced Topics
+TBD
+
+## Vocabulary
+* stale: obsoleto
